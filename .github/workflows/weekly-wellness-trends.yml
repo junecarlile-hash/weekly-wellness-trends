@@ -9,10 +9,16 @@ jobs:
   send:
     runs-on: ubuntu-latest
     steps:
+      - name: Install Python packages
+        run: pip install openai
       - name: Generate trends and post to Slack
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          python - << 'PY'
+          import os, json, urllib.request
+          from openai import OpenAI
         run: |
           python - << 'PY'
           import os, json, urllib.request
