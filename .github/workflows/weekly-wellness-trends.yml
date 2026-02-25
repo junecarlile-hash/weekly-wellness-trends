@@ -2,23 +2,20 @@ name: Weekly wellness trends to Slack
 
 on:
   schedule:
-    - cron: "0 17 * * 1"  # Mondays 9am Pacific (approx; cron is UTC)
+    - cron: "0 17 * * 1"
   workflow_dispatch:
 
 jobs:
   send:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Python packages
+      - name: Install OpenAI package
         run: pip install openai
+
       - name: Generate trends and post to Slack
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: |
-          python - << 'PY'
-          import os, json, urllib.request
-          from openai import OpenAI
         run: |
           python - << 'PY'
           import os, json, urllib.request
@@ -28,13 +25,8 @@ jobs:
 
           prompt = """
           You are my wellness trends analyst.
-          Return the top 3–4 wellness trends this week.  Please also include any trending ingredients/foods, good or bad.
-          For each trend include:
-          - What it is (1 sentence)
-          - Why it's rising (1–2 bullets)
-          - Who it's resonating with (demographic notes)
-          - Example ingredients/functions/products
-          Keep it concise and skimmable.
+          Return the top 3–4 wellness trends this week.
+          Keep it concise.
           """
 
           resp = client.responses.create(
