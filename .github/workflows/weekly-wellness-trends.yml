@@ -1,0 +1,50 @@
+name: Weekly wellness trends to Slack
+
+on:
+  schedule:
+    - cron: "0 17 * * 1"  # Mondays 9am Pacific (approx; cron is UTC)
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate trends and post to Slack
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          python - << 'PY'
+          import os, json, urllib.request
+          from openai import OpenAI
+
+          client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+          prompt = """
+          You are my wellness trends analyst.
+          Return the top 3–4 wellness trends this week.  Please also include any trending ingredients/foods, good or bad.
+          For each trend include:
+          - What it is (1 sentence)
+          - Why it's rising (1–2 bullets)
+          - Who it's resonating with (demographic notes)
+          - Example ingredients/functions/products
+          Keep it concise and skimmable.
+          """
+
+          resp = client.responses.create(
+              model="gpt-5.2",
+              input=prompt
+          )
+
+          text = resp.output_text.strip()
+          payload = {"text": f"*Weekly Wellness Trends Update*\n\n{text}"}
+
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          urllib.request.urlopen(req).read()
+          print("Posted to Slack.")
+          PY
